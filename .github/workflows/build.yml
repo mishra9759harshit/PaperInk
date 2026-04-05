@@ -26,12 +26,12 @@ jobs:
       run: |
         python -m pip install --upgrade pip setuptools wheel
         python -m pip install -r python_app/requirements.txt
-        python -m pip install pyinstaller
+        python -m pip install nuitka zstandard
 
-    - name: Compile Executable with PyInstaller
+    - name: Compile Executable with Nuitka
       working-directory: ./python_app
       run: |
-        python -m PyInstaller --noconsole --onefile --icon=assets/icon.ico --add-data="assets;assets" --collect-all Pillow --collect-all customtkinter --collect-all pystray --collect-all tkvideoplayer --hidden-import=cv2 --name=PaperInk_${{ matrix.architecture }} main.py
+        python -m nuitka --onefile --standalone --windows-console-mode=disable --windows-icon-from-ico=assets/icon.ico --include-data-dir=assets=assets --output-filename=PaperInk_${{ matrix.architecture }}.exe main.py
 
     - name: Generate MSIX Assets
       working-directory: ./python_app
@@ -46,7 +46,7 @@ jobs:
         mkdir MsixLayout\Assets
         
         # Place Executable
-        cp dist\PaperInk_${{ matrix.architecture }}.exe MsixLayout\PaperInk.exe
+        cp PaperInk_${{ matrix.architecture }}.exe MsixLayout\PaperInk.exe
         
         # Place Manifest
         cp AppxManifest.xml MsixLayout\AppxManifest.xml
@@ -64,7 +64,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: PaperInk-Standalone-${{ matrix.architecture }}
-        path: python_app/dist/PaperInk_${{ matrix.architecture }}.exe
+        path: python_app/PaperInk_${{ matrix.architecture }}.exe
 
     - name: Upload MSIX Store Package
       uses: actions/upload-artifact@v4
