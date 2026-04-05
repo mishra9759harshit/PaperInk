@@ -31,7 +31,7 @@ jobs:
     - name: Compile Executable with Nuitka
       working-directory: ./python_app
       run: |
-        python -m nuitka --onefile --standalone --windows-console-mode=disable --windows-icon-from-ico=assets/icon.ico --include-data-dir=assets=assets --output-filename=PaperInk_${{ matrix.architecture }}.exe main.py
+        python -m nuitka --assume-yes-for-downloads --onefile --standalone --windows-console-mode=disable --windows-icon-from-ico=assets/icon.ico --include-data-dir=assets=assets --output-filename=PaperInk_${{ matrix.architecture }}.exe main.py
 
     - name: Generate MSIX Assets
       working-directory: ./python_app
