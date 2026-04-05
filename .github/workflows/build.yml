@@ -35,7 +35,9 @@ jobs:
 
     - name: Generate MSIX Assets
       working-directory: ./python_app
-      run: python build_msix_assets.py
+      run: |
+        python -m pip install Pillow
+        python build_msix_assets.py
 
     - name: Build MSIX Staging Layout
       working-directory: ./python_app
