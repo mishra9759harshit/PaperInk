@@ -1,49 +1,44 @@
 import os
 from PIL import Image
 
-def create_msix_assets():
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    icon_path = os.path.join(base_dir, "assets", "icon.png")
-    
-    if not os.path.exists(icon_path):
-        print(f"Error: {icon_path} not found.")
+def generate_assets(source_path, output_dir):
+    if not os.path.exists(source_path):
+        print(f"Error: Source {source_path} not found.")
         return
 
-    # Load Source Icon
-    img = Image.open(icon_path).convert("RGBA")
+    os.makedirs(output_dir, exist_ok=True)
     
-    # Store the output in a dedicated MSStore_Assets folder
-    out_dir = os.path.join(base_dir, "MSStore_Assets")
-    os.makedirs(out_dir, exist_ok=True)
+    img = Image.open(source_path)
+    
+    # MSIX Required Sizes
+    assets = {
+        "StoreLogo.png": (50, 50),
+        "Square150x150Logo.png": (150, 150),
+        "Square44x44Logo.png": (44, 44),
+        "Wide310x150Logo.png": (310, 150),
+        "SplashScreen.png": (620, 300)
+    }
+    
+    for filename, size in assets.items():
+        # Handle aspect ratio for Splash/Wide by centering
+        if filename in ["Wide310x150Logo.png", "SplashScreen.png"]:
+            canvas = Image.new("RGBA", size, (0, 0, 0, 0))
+            # Resize icon to fit height
+            scale = size[1] / img.height
+            new_img = img.resize((int(img.width * scale), int(img.height * scale)), Image.Resampling.LANCZOS)
+            x = (size[0] - new_img.width) // 2
+            canvas.paste(new_img, (x, 0))
+            canvas.save(os.path.join(output_dir, filename))
+        else:
+            img.resize(size, Image.Resampling.LANCZOS).save(os.path.join(output_dir, filename))
+            
+    print(f"MSIX Assets generated in {output_dir}")
 
-    # 1. StoreLogo (50x50)
-    store_logo = img.resize((50, 50), Image.Resampling.LANCZOS)
-    store_logo.save(os.path.join(out_dir, "StoreLogo.png"))
-
-    # 2. Square150x150Logo
-    sq150 = img.resize((150, 150), Image.Resampling.LANCZOS)
-    sq150.save(os.path.join(out_dir, "Square150x150Logo.png"))
-
-    # 3. Square44x44Logo
-    sq44 = img.resize((44, 44), Image.Resampling.LANCZOS)
-    sq44.save(os.path.join(out_dir, "Square44x44Logo.png"))
-
-    # 4. Wide310x150Logo
-    # Create transparent 310x150, paste 150x150 in center
-    wide = Image.new("RGBA", (310, 150), (0, 0, 0, 0))
-    # center is (310-150)//2 = 80
-    wide.paste(sq150, (80, 0), mask=sq150)
-    wide.save(os.path.join(out_dir, "Wide310x150Logo.png"))
-
-    # 5. SplashScreen (620x300)
-    # Create transparent 620x300, paste 300x300 in center
-    splash = Image.new("RGBA", (620, 300), (0, 0, 0, 0))
-    sq300 = img.resize((300, 300), Image.Resampling.LANCZOS)
-    # center is (620-300)//2 = 160
-    splash.paste(sq300, (160, 0), mask=sq300)
-    splash.save(os.path.join(out_dir, "SplashScreen.png"))
-
-    print("MSIX Assets successfully generated in MSStore_Assets/")
+    # Generate icon.ico for the EXE
+    icon_path = os.path.join(os.path.dirname(source_path), "icon.ico")
+    img.save(icon_path, format="ICO", sizes=[(256, 256), (128, 128), (64, 64), (48, 48), (32, 32), (16, 16)])
+    print(f"Executable Icon generated at {icon_path}")
 
 if __name__ == "__main__":
-    create_msix_assets()
+    assets_dir = os.path.join(os.path.dirname(__file__), "assets")
+    generate_assets(os.path.join(assets_dir, "icon.png"), os.path.join(os.path.dirname(__file__), "MSStore_Assets"))

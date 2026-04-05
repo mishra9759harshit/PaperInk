@@ -48,7 +48,7 @@ class PaperInkApp:
         # 2. Initialize Single Root window (hidden)
         self.dashboard = PaperInkDashboard(engine)
         self.dashboard.withdraw()
-        self.dashboard.protocol("WM_DELETE_WINDOW", self.hide_window)
+        self.dashboard.protocol("WM_DELETE_WINDOW", self.cleanup)
         
         # Initialize Toolbar
         self.toolbar = Toolbar(self.dashboard)
@@ -119,9 +119,23 @@ class PaperInkApp:
     def cleanup(self):
         """Safe shutdown of magnification engine and UI resources"""
         logging.info("Main: Cleaning up resources...")
+        
+        # 1. Stop E-Ink Filter
         engine.stop()
+        
+        # 2. Stop Tray Icon if running
+        if self.tray:
+            try:
+                self.tray.icon.stop()
+            except:
+                pass
+                
+        # 3. Shutdown UI
         if self.dashboard:
             self.dashboard.quit()
+            self.dashboard.destroy()
+            
+        logging.info("Main: Safe exit complete.")
         sys.exit(0)
 
 if __name__ == "__main__":
