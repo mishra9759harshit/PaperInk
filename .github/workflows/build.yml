@@ -33,8 +33,39 @@ jobs:
       run: |
         pyinstaller --noconsole --onefile --icon=assets/icon.ico --add-data="assets;assets" --name=PaperInk_${{ matrix.architecture }} main.py
 
-    - name: Upload Build Artifact
+    - name: Generate MSIX Assets
+      working-directory: ./python_app
+      run: python build_msix_assets.py
+
+    - name: Build MSIX Staging Layout
+      working-directory: ./python_app
+      run: |
+        mkdir MsixLayout
+        mkdir MsixLayout\Assets
+        
+        # Place Executable
+        cp dist\PaperInk_${{ matrix.architecture }}.exe MsixLayout\PaperInk.exe
+        
+        # Place Manifest
+        cp AppxManifest.xml MsixLayout\AppxManifest.xml
+        
+        # Place Microsoft Store Visual Assets
+        Copy-Item -Path MSStore_Assets\* -Destination MsixLayout\Assets\ -Recurse
+
+    - name: Pack MSIX with MakeAppx
+      working-directory: ./python_app
+      run: |
+        $makeAppx = (Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\makeappx.exe" -Recurse | Select-Object -First 1).FullName
+        & $makeAppx pack /d MsixLayout /p PaperInk_${{ matrix.architecture }}.msix /l
+
+    - name: Upload EXE Build Artifact
       uses: actions/upload-artifact@v4
       with:
         name: PaperInk-Standalone-${{ matrix.architecture }}
         path: python_app/dist/PaperInk_${{ matrix.architecture }}.exe
+
+    - name: Upload MSIX Store Package
+      uses: actions/upload-artifact@v4
+      with:
+        name: PaperInk-MSStore-${{ matrix.architecture }}
+        path: python_app/PaperInk_${{ matrix.architecture }}.msix
