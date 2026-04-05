@@ -31,7 +31,7 @@ jobs:
     - name: Compile Executable with PyInstaller
       working-directory: ./python_app
       run: |
-        pyinstaller --noconsole --onefile --icon=assets/icon.ico --add-data="assets;assets" --name=PaperInk_${{ matrix.architecture }} main.py
+        pyinstaller --noconsole --onefile --icon=assets/icon.ico --add-data="assets;assets" --hidden-import=PIL --hidden-import=PIL._tkinter_finder --hidden-import=cv2 --hidden-import=pystray --hidden-import=customtkinter --name=PaperInk_${{ matrix.architecture }} main.py
 
     - name: Generate MSIX Assets
       working-directory: ./python_app
